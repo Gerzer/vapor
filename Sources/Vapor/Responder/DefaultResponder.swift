@@ -60,7 +60,6 @@ internal struct DefaultResponder: Responder {
 
     /// See `Responder`
     public func respond(to request: Request) -> EventLoopFuture<Response> {
-        let startTime = DispatchTime.now().uptimeNanoseconds
         let response: EventLoopFuture<Response>
         if let cachedRoute = self.getRoute(for: request) {
             request.route = cachedRoute.route
@@ -68,20 +67,7 @@ internal struct DefaultResponder: Responder {
         } else {
             response = self.notFoundResponder.respond(to: request)
         }
-        return response.always { result in
-            let status: HTTPStatus
-            switch result {
-            case .success(let response):
-                status = response.status
-            case .failure:
-                status = .internalServerError
-            }
-            self.updateMetrics(
-                for: request,
-                startTime: startTime,
-                statusCode: status.code
-            )
-        }
+        return response
     }
     
     /// Gets a `Route` from the underlying `TrieRouter`.
